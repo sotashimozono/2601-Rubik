@@ -1,0 +1,17 @@
+{
+    "name": "Julia Rubiks Dev Environment",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "julialang.language-julia",
+                "ms-vscode.live-server",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    },
+    "remoteUser": "root"
+}
