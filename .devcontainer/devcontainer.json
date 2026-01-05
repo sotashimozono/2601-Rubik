@@ -1,17 +1,23 @@
 {
-    "name": "Julia Rubiks Dev Environment",
-    "dockerComposeFile": "../docker-compose.yml",
-    "service": "app",
-    "workspaceFolder": "/app",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "julialang.language-julia",
-                "ms-vscode.live-server",
-                "dbaeumer.vscode-eslint",
-                "esbenp.prettier-vscode"
-            ]
-        }
+  "name": "Rubiks-GAP-Dev",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/julialang/devcontainer-features/julia:1": {
+      "version": "1.12"
     },
-    "remoteUser": "root"
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "julialang.language-julia",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.live-server"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install && julia --project -e 'using Pkg; Pkg.add([\"GAP\", \"JSON3\"]); Pkg.precompile()'"
 }
