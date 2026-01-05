@@ -1,93 +1,102 @@
-import React, { useState, useRef } from 'react';
-import Draggable from 'react-draggable';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import Draggable from 'react-draggable'; 
 import RubikVisualizer from './visualize';
+import './styles.css';
 
-function App() {
+const MemoizedVisualizer = memo(RubikVisualizer);
+
+export default function App() {
   const nodeRef = useRef(null);
-  // 入力した手順を保持するステート
-  const [moves, setMoves] = useState<string[]>([]);
+  const [cubeState, setCubeState] = useState<number[]>([]);
+  const [moveQueue, setMoveQueue] = useState<string[]>([]);
+  const [pendingMoves, setPendingMoves] = useState<string[]>([]);
+  const [isAnimated, setIsAnimated] = useState(true);
+  const historyRef = useRef<number[][]>([]);
+  const [animationSpeed, setAnimationSpeed] = useState(300);
+  const fetchInitial = useCallback(async () => {
+    const res = await fetch(`http://localhost:8080/get-state`);
+    const data = await res.json();
+    setCubeState(data.current);
+  }, []);
 
-  // ボタンを押した時の処理
-  const addMove = (move: string) => {
-    setMoves(prev => [...prev, move]);
-    console.log(`Current Sequence: ${moves.join(' ')} ${move}`);
-  };
+  useEffect(() => { fetchInitial(); }, [fetchInitial]);
 
-  // 手順をリセットする
-  const clearMoves = () => setMoves([]);
+  const handleStepComplete = useCallback(() => {
+    if (historyRef.current.length > 0) {
+      const nextState = historyRef.current.shift();
+      if (nextState) setCubeState(nextState);
+    }
+  }, []);
 
-  // Julia側へ命令を送信する（後述のAPIを利用）
   const executeMoves = async () => {
-    if (moves.length === 0) return;
-
+    if (pendingMoves.length === 0) return;
     try {
       const response = await fetch('http://localhost:8080/apply-moves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ moves: moves })
+        body: JSON.stringify({ moves: pendingMoves })
       });
-
-      if (response.ok) {
-        console.log("Moves applied successfully!");
-        clearMoves(); // 入力履歴をクリア
+    if (response.ok) {
+        const data = await response.json();
         
-        // ここで画面をリロード、あるいは state を更新して描画を反映させる
-        window.location.reload(); // 最も簡単な反映方法
+        if (isAnimated && data.history) {
+          historyRef.current = [...data.history];
+          setMoveQueue([...pendingMoves]);
+          
+          // ループではなく、ビジュアライザー側の onStepComplete と連携するか、
+          // 指定した ms で逐次更新するようにします。
+          // ここでは単純化のため、ループで指定ms待機します
+          /* 注: handleStepComplete を使う場合は、ビジュアライザー側で 
+             ms に合わせた回転速度を計算させるのが「マシ」な設計です。
+          */
+        } else {
+          setCubeState(data.current);
+        }
+        setPendingMoves([]);
       }
-    } catch (error) {
-      console.error("Failed to send moves to Julia:", error);
-    }
+    } catch (e) { console.error(e); }
   };
-
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#222', color: 'white' }}>
-      <header style={{ padding: '10px 20px', background: '#333', borderBottom: '1px solid #444' }}>
-        <h1 style={{ margin: 0, fontSize: '1.2rem' }}>Rubik Solver: Julia-GAP × React</h1>
-      </header>
-
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <RubikVisualizer />
-
+    <div className="app-container">
+      <div className="cube-viewport">
+        <MemoizedVisualizer 
+          state={cubeState} 
+          moveQueue={moveQueue} 
+          animationSpeed={animationSpeed} 
+          onAnimationComplete={() => setMoveQueue([])}
+          onStepComplete={handleStepComplete} 
+        />
         <Draggable nodeRef={nodeRef} handle=".drag-handle">
-          <div ref={nodeRef} style={{ 
-            position: 'absolute', top: '20px', right: '20px', 
-            background: 'rgba(10, 10, 10, 0.85)', padding: '15px', 
-            borderRadius: '12px', zIndex: 100, width: '220px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid #444'
-          }}>
-            {/* ドラッグハンドル (image_9c259b.png風) */}
-            <div className="drag-handle" style={{ 
-              width: '100%', height: '24px', background: '#333', borderRadius: '6px', 
-              marginBottom: '12px', cursor: 'grab', display: 'flex', 
-              alignItems: 'center', justifyContent: 'center', color: '#666'
-            }}>
-              <span style={{ fontSize: '12px' }}>⠿</span>
+          <div ref={nodeRef} className="control-panel">
+            <div className="drag-handle">⠿</div>
+            <div className="history-box">
+              {pendingMoves.join(' ') || '> input moves...'}
             </div>
-
-            {/* 入力履歴表示エリア (追加) */}
-            <div style={{ 
-              background: '#000', padding: '8px', borderRadius: '4px', 
-              marginBottom: '12px', minHeight: '40px', fontSize: '14px',
-              fontFamily: 'monospace', color: '#0f0', border: '1px solid #222',
-              overflowWrap: 'break-word'
-            }}>
-              {moves.length > 0 ? moves.join(' ') : '> input moves...'}
-            </div>
-
-            {/* 回転ボタン群 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-              {['U', 'L', 'F', 'R', 'B', 'D'].map((m) => (
-                <button key={m} onClick={() => addMove(m)} style={btnStyle}>{m}</button>
+            <div className="button-grid">
+              {['U', 'L', 'F', 'R', 'B', 'D'].map(m => (
+                <button key={m} className="rotate-btn" onClick={() => setPendingMoves(p => [...p, m])}>{m}</button>
               ))}
             </div>
-
-            {/* 実行・クリアボタン */}
-            <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <button onClick={clearMoves} style={{ ...actionBtnStyle, background: '#444' }}>Clear</button>
-              <button onClick={executeMoves} style={{ ...actionBtnStyle, background: '#28a745' }}>Apply</button>
+            <div className="action-row" style={{ gridTemplateColumns: '1fr' }}>
+              <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <input type="checkbox" checked={isAnimated} onChange={() => setIsAnimated(!isAnimated)} />
+                Use Animation
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', marginLeft: '20px' }}>
+                <input 
+                  type="number" 
+                  value={animationSpeed} 
+                  onChange={(e) => setAnimationSpeed(Number(e.target.value))}
+                  style={{ width: '50px', background: '#000', color: '#fff', border: '1px solid #444', borderRadius: '3px', padding: '2px' }}
+                />
+                <span>ms</span>
+              </div>
             </div>
-            
-            <button style={{ ...actionBtnStyle, background: '#007bff', width: '100%', marginTop: '8px' }}>
+            <div className="action-row">
+               <button className="action-btn" onClick={() => setPendingMoves([])} style={{ background: '#444' }}>Clear</button>
+               <button className="action-btn" onClick={executeMoves} style={{ background: '#28a745' }}>Apply</button>
+            </div>
+            <button className="action-btn" style={{ background: '#007bff', width: '100%', marginTop: '8px' }}>
               Solve Puzzle
             </button>
           </div>
@@ -96,17 +105,3 @@ function App() {
     </div>
   );
 }
-
-// スタイル定数
-const btnStyle = {
-  padding: '12px 0', cursor: 'pointer', background: '#333', color: 'white',
-  border: '1px solid #444', borderRadius: '8px', fontWeight: 'bold' as const,
-  fontSize: '16px', transition: 'background 0.2s'
-};
-
-const actionBtnStyle = {
-  padding: '10px', cursor: 'pointer', color: 'white', border: 'none',
-  borderRadius: '6px', fontWeight: 'bold' as const, fontSize: '14px'
-};
-
-export default App;

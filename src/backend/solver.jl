@@ -1,41 +1,80 @@
+# src/backend/solver.jl
 using GAP
 using JSON3
 
-U = @gap ( 1, 3, 8, 6) * ( 2, 5, 7, 4) * ( 9,33,25,17) * (10,34,26,18) * (11,35,27,19)
-L = @gap ( 9,11,16,14) * (10,13,15,12) * ( 1,17,41,40) * ( 4,20,44,37) * ( 6,22,46,35)
-F = @gap (17,19,24,22) * (18,21,23,20) * ( 6,25,43,16) * ( 7,28,42,13) * ( 8,30,41,11)
-R = @gap (25,27,32,30) * (26,29,31,28) * ( 3,38,43,19) * ( 5,36,45,21) * ( 8,33,48,24)
-B = @gap (33,35,40,38) * (34,37,39,36) * ( 3, 9,46,32) * ( 2,12,47,29) * ( 1,14,48,27)
-D = @gap (41,43,48,46) * (42,45,47,44) * (14,22,30,38) * (15,23,31,39) * (16,24,32,40)
+# --- 1. 定義・初期化系（純粋関数） ---
 
-cube = (@gap Group)(U, L, F, R, B, D)
-words = @gap ["U", "L", "F", "R", "B", "D"]
-free = (@gap FreeGroup)(words)
-hom = (@gap GroupHomomorphismByImages)(free, cube, (@gap GeneratorsOfGroup)(free), (@gap GeneratorsOfGroup)(cube))
-
-scramble_array = [rand(["U", "L", "F", "R", "B", "D"]) for _ in 1:20]
-scramble_str = join(scramble_array, " ")
-
-σ = @gap () 
-for s in scramble_array
-    idx = findfirst(==(s), ["U", "L", "F", "R", "B", "D"])
-    global σ *= (@gap GeneratorsOfGroup)(cube)[idx]
+"""JSONのサイクルからGAPの置換を作る"""
+function reconstruct_gap_perm(cycles)
+    gap_str = join(["(" * join(c, ",") * ")" for c in cycles], "")
+    return gap_str == "" ? (@gap ()) : GAP.evalstr(gap_str)
 end
 
-word_raw = string((@gap PreImagesRepresentative)(hom, σ))
+"""GAPの準同型写像（ソルバーの核）を作成する"""
+function create_homomorphism(operators)
+    names_jl = ["U", "L", "F", "R", "B", "D"]
+    gen_list = [operators[n] for n in names_jl]
+    
+    names_gap = @gap ["U", "L", "F", "R", "B", "D"]
+    cube_group = (@gap Group)(gen_list...)
+    free_group = (@gap FreeGroup)(names_gap)
+    return (@gap GroupHomomorphismByImages)(
+        free_group, 
+        cube_group, 
+        (@gap GeneratorsOfGroup)(free_group), 
+        (@gap GeneratorsOfGroup)(cube_group)
+    )
+end
+
+# --- 2. 状態管理（構造体） ---
+
+mutable struct RubikCube
+    state::Vector{Int}
+    operators::Dict{String, Any}
+    hom::Any
+    current_perm::Any
+    scramble::String # メタデータとして保持
+
+    function RubikCube(config_path::String, solve_json_path::String)
+        config = JSON3.read(read(config_path, String))
+        solve_data = JSON3.read(read(solve_json_path, String))
+        
+        ops = Dict(String(k) => reconstruct_gap_perm(v) for (k, v) in config.definitions)
+        hom = create_homomorphism(ops)
+        
+        new(Vector{Int}(solve_data.current), ops, hom, (@gap ()), solve_data.scramble)
+    end
+end
+# --- 3. 操作・計算メソッド ---
+
+"""手順を適用して状態と累積置換を更新する"""
+function apply_moves!(cube::RubikCube, move_names::Vector{String})
+    history = Vector{Vector{Int}}() # 状態の軌跡を保存
+    for m in move_names
+        perm = get(cube.operators, m, (@gap ()))
+        
+        # 物理的なステッカー移動
+        p_map = [Int(i^perm) for i in 1:48]
+        next_state = copy(cube.state)
+        for i in 1:48
+            next_state[p_map[i]] = cube.state[i]
+        end
+        cube.state = next_state
+        cube.current_perm *= perm
+        # 現在の状態を記録
+        push!(history, copy(cube.state))
+    end
+    return history # 全ステップの配列を返す
+end
+
+"""現在の累積置換から最短（に近い）解法を導く"""
+function find_solution(cube::RubikCube)
+    inv_perm = cube.current_perm^-1
+    word_raw = string((@gap PreImagesRepresentative)(cube.hom, inv_perm))
+    return gap_to_lsystem(word_raw)
+end
 
 function gap_to_lsystem(word_str)
-    res = replace(word_str, "*" => " ")
-    res = replace(res, "^-1" => "-")
-    res = replace(res, "^-2" => "++")
-    res = replace(res, "^2" => "++")
-    return join([occursin(r"[\+\-]", m) ? m : m*"+" for m in split(res)], " ")
-end
-
-data = Dict(
-    "scramble" => gap_to_lsystem(scramble_str),
-    "solution" => gap_to_lsystem(word_raw)
-)
-open("solve.json", "w") do f
-    JSON3.pretty(f, data)
+    res = replace(word_str, "*" => " ", "^-1" => "-", "^-2" => "++", "^2" => "++")
+    return join([occursin(r"[\+\-]", m) ? m : m * "+" for m in split(res)], " ")
 end

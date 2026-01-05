@@ -1,4 +1,3 @@
-# dev/init.jl
 using JSON3
 
 function initialize_cube_system()
