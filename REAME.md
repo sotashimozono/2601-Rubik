@@ -11,6 +11,15 @@
 代数学を取り扱う対象として、ルービックキューブが群論で記述できるということを思い出し、それで取り掛かることに。自分の勉強を兼ねて、webアプリは React/Three.js などの洗練されたコンポーネントを使用し、バックエンドの群論の記述、回転操作を julia で担当する。というような設計を目指している。  
 なお、設計には gemini の力を大きく借りている。とはいえバグがいっぱいあったり、数理的な構造とかでは頼りないのでreactやwebフレームワークの設計が彼の主な役割である。
 
+## TechStack
+
+| Purpose | Tools |
+| -- | -- |  
+| Algebra Engine | Julia (GAP.jl) |
+| Backend API | Oxygen.jl / HTTP.jl |
+| Frontend UI | React / TypeScript / Vite |
+| 3D Rendering | Three.js |
+
 ## Log
 
 - 260104 : ルービックキューブをウェブ上に描画するところまで
