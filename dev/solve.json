@@ -1,4 +1,4 @@
 {
-    "scramble": "B+ D+ L+ B+ B+ U+ U+ F+ B+ D+ U+ D+ B+ R+ F+ B+ B+ F+ B+ U+",
-    "solution": "R- B+ D+ R+ D^-2 L- D+ L+ F- L+ U- F+ U+ F- L+ F+ L+ U+ L- B- U- B+ U- L- F- L- F+ L+ U+ L- U+ L+ U- L+ F- L- F+ L- U- L+ U++ L+ F+ U+ F- U- L- F+ R+ U+ R- U- F- U- L- U- L+ U+ L+ F- L- F^-2 U+ F- U- F- L+ F+ L- U+ F+ R+ U+ R- U- F- U- L- U- B- U+ B+ L+ U+ F+ R+ U+ R- U- F- U- L- U- B- U++ B+ L+ F+ R+ U- R- F-"
+    "scramble": "B+ F+ B+ U+ U+ D+ B+ B+ D+ F+ D+ D+ R+ U+ L+ R+ L+ F+ L+ L+",
+    "solution": "U++ B++ R+ F- U- R+ D+ F+ R+ D- F++ U++ D- B- D+ U++ F++ R+ U+ R- F+ U- L+ F- L- F- U++ L^3+ U+ L- B- U- B+ L- U+ L+ U++ L+ F- L- F+ L- U- L++ U+ F+ U- F- L++ U- L- B+ L+ B- U+ L+ U^-3 L+ U+ L- U+ L+ U- (U- L-)++ U- L+ U+ L+ F- L- F++ U+ F- U- F- L+ F+ L-"
 }
