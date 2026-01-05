@@ -1,4 +1,4 @@
 {
-    "scramble": "R+ F+ F+ F+ U+ L+ R+ B+ D+ B+ U+ L+ F+ F+ U+ R+ R+ D+ D+ F+",
-    "solution": "U- F+ U- F- U++ B+ L- B- U- L+ U+ L+ F+ U- F- L- U+ L+ U++ L- U- L+ U- L- U+ F+ R+ U+ R- U- F- U- L+ U+ F+ U- F- L- U- F+ U+ F- U+ L- F- L+ F+ L++ U- L- U+ L+ B- U- B+ L- D+ F- D- U+ R+ U- R- F+ L+ D+ R- D- B+ D+ B- L- R- U- D++ F-"
+    "scramble": "L+ F+ F+ R+ F+ F+ B+ D+ L+ R+ F+ D+ L+ R+ U+ U+ L+ U+ U+ R+",
+    "solution": "L+ F+ U+ F- U- L- F+ U+ F++ L+ F+ L++ U+ L+ F- U- L- U+ L+ F+ U++ F+ U+ L+ U+ L- F- L+ U- L- F+ U- F- L+ U+ F+ U- F- L- F+ U+ R+ U- R- F- U+ L- U+ L+ U++ F+ R+ U+ R- U- F- U- L- U++ F- L- F+ L+ U- L++ U+ F+ L+ F+ L- F- U- F- U++ F+ L- F++ D+ R- D- U- B- R++ B+ R+ F- U- R+ D- R- B-"
 }

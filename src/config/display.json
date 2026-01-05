@@ -1,0 +1,21 @@
+{
+  "lighting": {
+    "ambient_intensity": 2.5,
+    "point_intensity": 1.0,
+    "point_light_position": [10, 10, 10]
+  },
+  "colors": {
+    "U": "#FFFFFF",
+    "L": "#009B48",
+    "F": "#B71234",
+    "R": "#0046AD",
+    "B": "#FF5800",
+    "D": "#FFD500",
+    "Internal": "#000000"
+  },
+"view": {
+    "sticker_size": 0.92,
+    "camera_position": [5, 5, 5],
+    "background_color": "#111111" 
+  }
+}

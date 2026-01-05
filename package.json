@@ -18,6 +18,7 @@
     "jquery": "^3.7.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-draggable": "^4.5.0",
     "roofpig": "github:larspetrus/Roofpig",
     "three": "^0.182.0"
   },
