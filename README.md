@@ -29,3 +29,10 @@
   - Challenges : 現在はjulia側とreact側のそれぞれでサーバーを立ち上げている。
     - ターミナル2台で julia server.jl / npm run dev の2つを走らせている。
     - これを一つの interface で管理できるといいね
+- 260106 : 夜のちょびっと開発
+  - Achievement
+    - B 面の描画の不具合を修正した (y,zの指定の誤り)
+    - concurrently を用いて julia server.jl / npm run dev の２つを統一して動かせるようになった
+    - 手元でならばルービックキューブを解く操作を確認できた
+  - Issue : solve の interface の崩れと、解法の統合
+  - Challenges : 解の文字列、操作がかなり大きいためこれの縮小

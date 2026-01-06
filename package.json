@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite"
+    "dev:frontend": "vite",
+    "dev:backend": "julia --project=. ./src/backend/server.jl",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
   },
   "keywords": [],
   "author": "",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
     "vite": "^7.3.0"
   }
 }

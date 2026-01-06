@@ -70,7 +70,8 @@ function apply_moves!(cube::RubikCube, move_names::Vector{String})
         p_map = [Int(i^actual_perm) for i in 1:48]
         next_state = copy(cube.state)
         for i in 1:48
-            next_state[p_map[i]] = cube.state[i]
+            dest = Int(i^actual_perm)
+            next_state[dest] = cube.state[i]
         end
         cube.state = next_state
         push!(history, copy(cube.state))
@@ -79,30 +80,28 @@ function apply_moves!(cube::RubikCube, move_names::Vector{String})
 end
 
 """
-GAPの複雑な表記を一手ずつの配列に分解する（Regexエンジン）
-U^3 -> U-, R^-1 -> R-, U^2 -> U U
+GAPの内部表現 [gen_idx, pow, ...] を一手ずつの配列に変換する
+create_homomorphism で定義した順序 (U, L, F, R, B, D) に対応
 """
-function gap_to_lsystem(word_str::String)
-    res = replace(word_str, "*" => " ", "(" => "", ")" => "")
+function ext_rep_to_moves(ext_rep_data::Vector{Int})
+    # create_homomorphism の names_jl = ["U", "L", "F", "R", "B", "D"] に対応
+    mapping = Dict(1 => "U", 2 => "L", 3 => "F", 4 => "R", 5 => "B", 6 => "D")
     final_moves = String[]
-    
-    for p in split(res)
-        # 正規表現で面と指数を抽出
-        m = match(r"([A-Z])(?:\^?([\-\d]+))?", p)
-        if m === nothing continue end
+    # 2つずつのペア [生成元インデックス, 指数] で処理
+    for i in 1:2:length(ext_rep_data)
+        idx = ext_rep_data[i]
+        pow = ext_rep_data[i+1]
+        face = mapping[idx]
         
-        face = m.captures[1]
-        pow_str = m.captures[2]
+        # 指数を 0-3 の回転数に正規化
+        n = pow % 4
+        if n < 0 n += 4 end
         
-        pow = pow_str === nothing ? 1 : parse(Int, pow_str)
-        pow = pow % 4
-        if pow < 0 pow += 4 end
-        
-        if pow == 1       # 90度時計回り
+        if n == 1       # 90度
             push!(final_moves, face)
-        elseif pow == 2   # 180度
-            push!(final_moves, face); push!(final_moves, face)
-        elseif pow == 3   # 270度（反時計回り）
+        elseif n == 2   # 180度
+            push!(final_moves, face, face)
+        elseif n == 3   # 270度
             push!(final_moves, face * "-")
         end
     end
@@ -140,21 +139,26 @@ function optimize_moves(move_list::Vector{String})
 end
 
 # --- 4. 解法エンジン ---
-
 """現在の状態から解法（最適化済み）を導き出す"""
 function find_solution(cube::RubikCube)
-    # SUCCESSを勝ち取ったロジック：
-    # state配列そのものをGAPの置換gにし、gをターゲットとして解く
+    # 1. 現在の状態を置換オブジェクトに変換
     gap_list = GAP.evalstr("[" * join(cube.state, ",") * "]")
     g = (@gap PermList)(gap_list)
-    
-    # 単位元からgへ至る語を計算
+
+    # 2. 単位元から現在の状態 g を作るための「単語」を計算
     word = (@gap PreImagesRepresentative)(cube.hom, g)
-    word_raw = String((@gap String)(word))
     
-    # パースと最適化
-    moves = gap_to_lsystem(word_raw)
+    # 3. 文字列パースではなく、GAP内部の整数配列形式(ExtRep)を取得
+    # これによりカッコ () やべき乗 ^ のパースエラーを完全に回避
+    ext_rep = GAP.Globals.ExtRepOfObj(word)
+    ext_rep_jl = Int[x for x in ext_rep]
+    
+    # 4. 手順のリストに変換
+    moves = ext_rep_to_moves(ext_rep_jl)
+    
+    # 5. 既存の最適化ロジックを通す
     optimized = optimize_moves(moves)
     
+    # 6. バックエンドとの互換性のため、スペース区切りの文字列で返す
     return join(optimized, " ")
 end

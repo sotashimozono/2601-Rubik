@@ -147,14 +147,6 @@ export default function App() {
               {pendingMoves.length > 0 ? pendingMoves.join(' ') : '> input moves...'}
             </div>
 
-            {/* 逆回転モード設定 */}
-            <div style={{ marginBottom: '10px' }}>
-              <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', color: isInverseMode ? '#ff4d4d' : '#888' }}>
-                <input type="checkbox" checked={isInverseMode} onChange={() => setIsInverseMode(!isInverseMode)} />
-                Inverse Mode (Append ')
-              </label>
-            </div>
-
             {/* 回転ボタン群 */}
             <div className="button-grid">
               {['U', 'L', 'F', 'R', 'B', 'D'].map(m => {
@@ -167,22 +159,53 @@ export default function App() {
               })}
             </div>
 
-            {/* アニメーションと速度設定 */}
-            <div className="action-row" style={{ gridTemplateColumns: '1fr', gap: '4px' }}>
-              <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <input type="checkbox" checked={isAnimated} onChange={() => setIsAnimated(!isAnimated)} />
-                Use Animation
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', marginLeft: '18px' }}>
-                <input 
-                  type="number" 
-                  value={animationSpeed} 
-                  onChange={(e) => setAnimationSpeed(Math.max(1, Number(e.target.value)))}
-                  style={{ width: '55px', background: '#000', color: '#fff', border: '1px solid #444', borderRadius: '4px', padding: '2px 4px' }}
-                />
-                <span>ms</span>
-              </div>
+            <div className="action-row" style={{ gridTemplateColumns: '1fr', marginBottom: '10px' }}>
+                <button 
+                  className={`action-btn ${isInverseMode ? 'active' : ''}`}
+                  onClick={() => setIsInverseMode(!isInverseMode)}
+                  style={{ 
+                    background: isInverseMode ? '#ff4d4d' : '#444', // アクティブ時は赤、通常はボタン色
+                    width: '100%',
+                    fontWeight: 'normal',
+                    fontSize: '16px',
+                    transition: '0.2s'
+                  }}
+                >
+                  {isInverseMode ? 'Inverse Mode ON (−)' : 'Inverse Mode OFF'}
+                </button>
             </div>
+
+            {/* アニメーションと速度設定 */}
+            <div className="action-row" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', // 左右に振り分け
+                marginBottom: '10px',
+                padding: '0 4px' 
+              }}>
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={isAnimated} onChange={() => setIsAnimated(!isAnimated)} />
+                  Use Animation
+                </label>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px' }}>
+                  <input 
+                    type="number" 
+                    value={animationSpeed} 
+                    onChange={(e) => setAnimationSpeed(Math.max(1, Number(e.target.value)))}
+                    style={{ 
+                      width: '50px', 
+                      background: '#000', 
+                      color: '#fff', 
+                      border: '1px solid #444', 
+                      borderRadius: '4px', 
+                      padding: '2px 4px',
+                      textAlign: 'right'
+                    }}
+                  />
+                  <span>ms</span>
+                </div>
+              </div>
 
             {/* 各種アクションボタン */}
             <div className="action-row">
