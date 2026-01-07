@@ -13,7 +13,7 @@ RUN julia --project=.  -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 # Node依存関係
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # アプリケーションコード
 COPY . .
