@@ -25,7 +25,7 @@ RUN npm run build
 # ========================================
 # Stage 2: 本番環境
 # ========================================
-FROM julia: 1.12
+FROM julia:1.12.3
 
 # Node.jsとserveをインストール
 RUN apt-get update && \
