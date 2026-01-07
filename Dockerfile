@@ -37,7 +37,7 @@ COPY test/ ./test/
 COPY --from=frontend-builder /app/dist ./dist
 
 # 起動スクリプト
-COPY docker-entrypoint-prod.sh /docker-entrypoint. sh
+COPY docker-entrypoint-prod.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 ENV PORT=8080
