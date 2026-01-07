@@ -8,7 +8,7 @@ RUN apt-get install -y nodejs
 WORKDIR /app
 
 # Julia依存関係をキャッシュ
-COPY Project. toml Manifest.toml ./
+COPY Project.toml Manifest.toml ./
 RUN julia --project=.  -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 # Node依存関係
