@@ -5,42 +5,55 @@ FROM node:20-slim AS frontend-builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+# package.jsonとpackage-lock.jsonをコピー
+COPY package.json package-lock.json ./
 
-COPY . . 
+# 依存関係をインストール
+RUN npm install
+
+# vite.config.tsなど設定ファイルをコピー
+COPY vite.config.ts ./
+
+# ソースコードをコピー
+COPY index.html ./
+COPY main.tsx ./
+COPY src/ ./src/
+
+# ビルド実行
 RUN npm run build
 
 # ========================================
 # Stage 2: 本番環境
 # ========================================
-FROM julia:1.11
+FROM julia: 1.12
 
-# Node.jsインストール（軽量版）
-RUN apt-get update && apt-get install -y curl && \
+# Node.jsとserveをインストール
+RUN apt-get update && \
+    apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g serve && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Julia依存関係
 COPY Project.toml Manifest.toml ./
-RUN julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+RUN julia --project=.  -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
-# Juliaコード
+# Juliaソースコード
 COPY src/ ./src/
 COPY test/ ./test/
 
-# ビルド済みフロントエンド
+# ビルド済みフロントエンド（Stage 1から）
 COPY --from=frontend-builder /app/dist ./dist
 
 # 起動スクリプト
-COPY docker-entrypoint-prod.sh /docker-entrypoint.sh
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 ENV PORT=8080
-EXPOSE 8080
+EXPOSE 8080 5173
 
-CMD ["/docker-entrypoint. sh"]
+CMD ["/docker-entrypoint.sh"]
